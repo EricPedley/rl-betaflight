@@ -200,10 +200,10 @@
 
 #define USE_SERVOS
 
-#define USE_VTX
-#define USE_OSD
-#define USE_OSD_SD
-#define USE_OSD_HD
+// #define USE_VTX
+// #define USE_OSD
+// #define USE_OSD_SD
+// #define USE_OSD_HD
 #define USE_BLACKBOX
 
 #if TARGET_FLASH_SIZE >= 1024
