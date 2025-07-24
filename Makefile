@@ -413,6 +413,8 @@ $(TARGET_HEX): $(TARGET_BIN)
 
 endif
 
+include ../../oot.mk
+
 $(TARGET_ELF): $(TARGET_OBJS) $(LD_SCRIPT) $(LD_SCRIPTS)
 	@echo "Linking $(TARGET_NAME)" "$(STDOUT)"
 	$(V1) $(CROSS_CC) -o $@ $(filter-out %.ld,$^) $(LD_FLAGS)

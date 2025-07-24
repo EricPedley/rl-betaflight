@@ -64,6 +64,9 @@
 
 #include "mixer.h"
 
+#ifdef RL_TOOLS_BETAFLIGHT_ENABLE
+#include "rl_tools/policy.h"
+#endif
 #define DYN_LPF_THROTTLE_STEPS           100
 #define DYN_LPF_THROTTLE_UPDATE_DELAY_US 5000 // minimum of 5ms between updates
 
@@ -760,6 +763,9 @@ FAST_CODE_NOINLINE void mixTable(timeUs_t currentTimeUs)
         // Apply the mix to motor endpoints
         applyMixToMotors(motorMix, activeMixer);
     }
+#ifdef RL_TOOLS_BETAFLIGHT_ENABLE
+        rl_tools_control(ARMING_FLAG(ARMED));
+#endif
 }
 
 void mixerSetThrottleAngleCorrection(int correctionValue)
