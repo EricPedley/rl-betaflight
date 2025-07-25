@@ -751,6 +751,7 @@ FAST_CODE_NOINLINE void mixTable(timeUs_t currentTimeUs)
         break;
     }
 
+#ifndef RL_TOOLS_BETAFLIGHT_ENABLE
     if (featureIsEnabled(FEATURE_MOTOR_STOP)
         && ARMING_FLAG(ARMED)
         && !mixerRuntime.feature3dEnabled
@@ -763,7 +764,7 @@ FAST_CODE_NOINLINE void mixTable(timeUs_t currentTimeUs)
         // Apply the mix to motor endpoints
         applyMixToMotors(motorMix, activeMixer);
     }
-#ifdef RL_TOOLS_BETAFLIGHT_ENABLE
+#else
         rl_tools_control(ARMING_FLAG(ARMED));
 #endif
 }
