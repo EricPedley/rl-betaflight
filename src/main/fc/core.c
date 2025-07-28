@@ -1295,6 +1295,10 @@ FAST_CODE void taskMainPidLoop(timeUs_t currentTimeUs)
     subTaskPidController(currentTimeUs);
     subTaskMotorUpdate(currentTimeUs);
     subTaskPidSubprocesses(currentTimeUs);
+    
+    DEBUG_SET(DEBUG_ACCELEROMETER, 0, acc.dev.ADCRaw[0]);
+    DEBUG_SET(DEBUG_ACCELEROMETER, 1, acc.dev.ADCRaw[1]);
+    DEBUG_SET(DEBUG_ACCELEROMETER, 2, acc.dev.ADCRaw[2]);
 
     DEBUG_SET(DEBUG_CYCLETIME, 0, getTaskDeltaTimeUs(TASK_SELF));
     DEBUG_SET(DEBUG_CYCLETIME, 1, getAverageSystemLoadPercent());
