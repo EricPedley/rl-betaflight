@@ -395,7 +395,7 @@ static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t 
 {
 #ifdef RL_TOOLS_BETAFLIGHT_ENABLE
     // Check if NN control mode is active
-    if (FLIGHT_MODE(NN_CONTROL_MODE)) {
+    if (IS_RC_MODE_ACTIVE(BOXNNCONTROL)) {
         // NN control is active - use rl_tools instead of standard mixer
         rl_tools_control(ARMING_FLAG(ARMED));
     } else
