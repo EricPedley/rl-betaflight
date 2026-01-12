@@ -1,2 +1,5 @@
 include ../../oot_pre.mk
-CFLAGS += -Wno-error=enum-int-mismatch -D RL_TOOLS_BETAFLIGHT_VERSION_4_5
+ifneq ($(TARGET),SITL)
+CFLAGS += -Wno-error=enum-int-mismatch
+endif
+CFLAGS += -D RL_TOOLS_BETAFLIGHT_VERSION_4_5
