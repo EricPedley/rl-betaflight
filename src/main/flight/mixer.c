@@ -751,22 +751,27 @@ FAST_CODE_NOINLINE void mixTable(timeUs_t currentTimeUs)
         break;
     }
 
-#ifndef RL_TOOLS_BETAFLIGHT_ENABLE
-    if (featureIsEnabled(FEATURE_MOTOR_STOP)
-        && ARMING_FLAG(ARMED)
-        && !mixerRuntime.feature3dEnabled
-        && !airmodeEnabled
-        && !FLIGHT_MODE(GPS_RESCUE_MODE)   // disable motor_stop while GPS Rescue is active
-        && (rcData[THROTTLE] < rxConfig()->mincheck)) {
-        // motor_stop handling
-        applyMotorStop();
-    } else {
-        // Apply the mix to motor endpoints
-        applyMixToMotors(motorMix, activeMixer);
-    }
-#else
+#ifdef RL_TOOLS_BETAFLIGHT_ENABLE
+    if (FLIGHT_MODE(NN_CONTROL_MODE)) {
+        // NN control is active - use rl_tools
         rl_tools_control(ARMING_FLAG(ARMED));
+    } else
 #endif
+    {
+        // Standard Betaflight control
+        if (featureIsEnabled(FEATURE_MOTOR_STOP)
+            && ARMING_FLAG(ARMED)
+            && !mixerRuntime.feature3dEnabled
+            && !airmodeEnabled
+            && !FLIGHT_MODE(GPS_RESCUE_MODE)   // disable motor_stop while GPS Rescue is active
+            && (rcData[THROTTLE] < rxConfig()->mincheck)) {
+            // motor_stop handling
+            applyMotorStop();
+        } else {
+            // Apply the mix to motor endpoints
+            applyMixToMotors(motorMix, activeMixer);
+        }
+    }
 }
 
 void mixerSetThrottleAngleCorrection(int correctionValue)
