@@ -393,34 +393,44 @@ static void applyRpmLimiter(mixerRuntime_t *mixer)
 
 static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t *activeMixer)
 {
-    // Now add in the desired throttle, but keep in a range that doesn't clip adjusted
-    // roll/pitch/yaw. This could move throttle down, but also up for those low throttle flips.
-    for (int i = 0; i < mixerRuntime.motorCount; i++) {
-        float motorOutput = motorOutputMixSign * motorMix[i] + throttle * activeMixer[i].throttle;
-#ifdef USE_THRUST_LINEARIZATION
-        motorOutput = pidApplyThrustLinearization(motorOutput);
+#ifdef RL_TOOLS_BETAFLIGHT_ENABLE
+    // Check if NN control mode is active
+    if (FLIGHT_MODE(NN_CONTROL_MODE)) {
+        // NN control is active - use rl_tools instead of standard mixer
+        rl_tools_control(ARMING_FLAG(ARMED));
+    } else
 #endif
-        motorOutput = motorOutputMin + motorOutputRange * motorOutput;
+    {
+        // Standard Betaflight control - apply the mix to motor endpoints
+        // Now add in the desired throttle, but keep in a range that doesn't clip adjusted
+        // roll/pitch/yaw. This could move throttle down, but also up for those low throttle flips.
+        for (int i = 0; i < mixerRuntime.motorCount; i++) {
+            float motorOutput = motorOutputMixSign * motorMix[i] + throttle * activeMixer[i].throttle;
+#ifdef USE_THRUST_LINEARIZATION
+            motorOutput = pidApplyThrustLinearization(motorOutput);
+#endif
+            motorOutput = motorOutputMin + motorOutputRange * motorOutput;
 
 #ifdef USE_SERVOS
-        if (mixerIsTricopter()) {
-            motorOutput += mixerTricopterMotorCorrection(i);
-        }
-#endif
-        if (failsafeIsActive()) {
-#ifdef USE_DSHOT
-            if (isMotorProtocolDshot()) {
-                motorOutput = (motorOutput < motorRangeMin) ? mixerRuntime.disarmMotorOutput : motorOutput; // Prevent getting into special reserved range
+            if (mixerIsTricopter()) {
+                motorOutput += mixerTricopterMotorCorrection(i);
             }
 #endif
-            motorOutput = constrainf(motorOutput, mixerRuntime.disarmMotorOutput, motorRangeMax);
-        } else {
-            motorOutput = constrainf(motorOutput, motorRangeMin, motorRangeMax);
+            if (failsafeIsActive()) {
+#ifdef USE_DSHOT
+                if (isMotorProtocolDshot()) {
+                    motorOutput = (motorOutput < motorRangeMin) ? mixerRuntime.disarmMotorOutput : motorOutput; // Prevent getting into special reserved range
+                }
+#endif
+                motorOutput = constrainf(motorOutput, mixerRuntime.disarmMotorOutput, motorRangeMax);
+            } else {
+                motorOutput = constrainf(motorOutput, motorRangeMin, motorRangeMax);
+            }
+            motor[i] = motorOutput;
         }
-        motor[i] = motorOutput;
     }
 
-    // Disarmed mode
+    // Disarmed mode - applies to both NN and standard control
     if (!ARMING_FLAG(ARMED)) {
         for (int i = 0; i < mixerRuntime.motorCount; i++) {
             motor[i] = motor_disarmed[i];
@@ -751,26 +761,18 @@ FAST_CODE_NOINLINE void mixTable(timeUs_t currentTimeUs)
         break;
     }
 
-#ifdef RL_TOOLS_BETAFLIGHT_ENABLE
-    if (FLIGHT_MODE(NN_CONTROL_MODE)) {
-        // NN control is active - use rl_tools
-        rl_tools_control(ARMING_FLAG(ARMED));
-    } else
-#endif
-    {
-        // Standard Betaflight control
-        if (featureIsEnabled(FEATURE_MOTOR_STOP)
-            && ARMING_FLAG(ARMED)
-            && !mixerRuntime.feature3dEnabled
-            && !airmodeEnabled
-            && !FLIGHT_MODE(GPS_RESCUE_MODE)   // disable motor_stop while GPS Rescue is active
-            && (rcData[THROTTLE] < rxConfig()->mincheck)) {
-            // motor_stop handling
-            applyMotorStop();
-        } else {
-            // Apply the mix to motor endpoints
-            applyMixToMotors(motorMix, activeMixer);
-        }
+    // Check if motor stop should be applied
+    if (featureIsEnabled(FEATURE_MOTOR_STOP)
+        && ARMING_FLAG(ARMED)
+        && !mixerRuntime.feature3dEnabled
+        && !airmodeEnabled
+        && !FLIGHT_MODE(GPS_RESCUE_MODE)   // disable motor_stop while GPS Rescue is active
+        && (rcData[THROTTLE] < rxConfig()->mincheck)) {
+        // motor_stop handling
+        applyMotorStop();
+    } else {
+        // Apply the mix to motor endpoints (handles both NN and standard control)
+        applyMixToMotors(motorMix, activeMixer);
     }
 }
 
