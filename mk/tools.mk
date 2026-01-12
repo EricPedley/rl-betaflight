@@ -16,9 +16,9 @@
 ##############################
 
 # Set up ARM (STM32) SDK
-ARM_SDK_DIR ?= $(TOOLS_DIR)/gcc-arm-none-eabi-10.3-2021.10
+ARM_SDK_DIR ?= $(TOOLS_DIR)/arm-gnu-toolchain-13.2.Rel1-x86_64-arm-none-eabi
 # Checked below, Should match the output of $(shell arm-none-eabi-gcc -dumpversion)
-GCC_REQUIRED_VERSION ?= 10.3.1
+GCC_REQUIRED_VERSION ?= 13.2.1
 
 .PHONY: arm_sdk_version
 
@@ -28,18 +28,17 @@ arm_sdk_version:
 ## arm_sdk_install   : Install Arm SDK
 .PHONY: arm_sdk_install
 
-ARM_SDK_URL_BASE  := https://developer.arm.com/-/media/Files/downloads/gnu-rm/10.3-2021.10/gcc-arm-none-eabi-10.3-2021.10
-# source: https://developer.arm.com/open-source/gnu-toolchain/gnu-rm/downloads
+# source: https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads
 ifeq ($(OSFAMILY), linux)
-  ARM_SDK_URL  := $(ARM_SDK_URL_BASE)-$(shell uname -m)-linux.tar.bz2
+  ARM_SDK_URL  := https://developer.arm.com/-/media/files/downloads/gnu/13.2.rel1/binrel/arm-gnu-toolchain-13.2.rel1-x86_64-arm-none-eabi.tar.xz?rev=e434b9ea4afc4ed7998329566b764309&revision=e434b9ea-4afc-4ed7-9983-29566b764309&hash=B7747CCEEAC7C32A13B823A6AAF1CC2E
 endif
 
 ifeq ($(OSFAMILY), macosx)
-  ARM_SDK_URL  := $(ARM_SDK_URL_BASE)-mac.tar.bz2
+  ARM_SDK_URL  := https://developer.arm.com/-/media/files/downloads/gnu/13.2.rel1/binrel/arm-gnu-toolchain-13.2.rel1-darwin-x86_64-arm-none-eabi.tar.xz?rev=a3d8c87bb0af4c40b7d7e0e291f6541b&revision=a3d8c87b-b0af-4c40-b7d7-e0e291f6541b&hash=6C5B85A0C20DDC5C42E24DC387ABCA88
 endif
 
 ifeq ($(OSFAMILY), windows)
-  ARM_SDK_URL  := $(ARM_SDK_URL_BASE)-win32.zip
+  ARM_SDK_URL  := https://developer.arm.com/-/media/files/downloads/gnu/13.2.rel1/binrel/arm-gnu-toolchain-13.2.rel1-mingw-w64-i686-arm-none-eabi.zip?rev=93fda279901c4c0299e03e5c4899b51f&revision=93fda279-901c-4c02-99e0-3e5c4899b51f&hash=4F8AEB9120C03EC43E59DAEA319DEBD1
 endif
 
 ARM_SDK_FILE := $(notdir $(ARM_SDK_URL))
@@ -53,9 +52,9 @@ arm_sdk_install: arm_sdk_download $(SDK_INSTALL_MARKER)
 $(SDK_INSTALL_MARKER):
 ifneq ($(OSFAMILY), windows)
         # binary only release so just extract it
-	$(V1) tar -C $(TOOLS_DIR) -xjf "$(DL_DIR)/$(ARM_SDK_FILE)"
+	$(V1) tar -C $(TOOLS_DIR) -xJf "$(DL_DIR)/$(ARM_SDK_FILE)"
 else
-	$(V1) unzip -q -d $(ARM_SDK_DIR) "$(DL_DIR)/$(ARM_SDK_FILE)"
+	$(V1) unzip -q -d $(TOOLS_DIR) "$(DL_DIR)/$(ARM_SDK_FILE)"
 endif
 
 .PHONY: arm_sdk_download
