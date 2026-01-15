@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "platform.h"
 
@@ -93,6 +94,24 @@ static struct {
 
 #endif // USE_SDCARD
 
+#ifdef USE_BLACKBOX_FILE
+#ifndef BLACKBOX_FILENAME
+#define BLACKBOX_FILENAME "blackbox.bfl"
+#endif
+static FILE *blackboxFile = NULL;
+#define BLACKBOX_FILE_BUFFER_SIZE 4096
+static uint8_t blackboxFileBuffer[BLACKBOX_FILE_BUFFER_SIZE];
+static uint32_t blackboxFileBufferPos = 0;
+
+static void blackboxFileFlushBuffer(void)
+{
+    if (blackboxFile && blackboxFileBufferPos > 0) {
+        fwrite(blackboxFileBuffer, 1, blackboxFileBufferPos, blackboxFile);
+        blackboxFileBufferPos = 0;
+    }
+}
+#endif // USE_BLACKBOX_FILE
+
 void blackboxOpen(void)
 {
     serialPort_t *sharedBlackboxAndMspPort = findSharedSerialPort(FUNCTION_BLACKBOX, FUNCTION_MSP);
@@ -123,6 +142,14 @@ void blackboxWrite(uint8_t value)
 #ifdef USE_SDCARD
     case BLACKBOX_DEVICE_SDCARD:
         afatfs_fputc(blackboxSDCard.logFile, value);
+        break;
+#endif
+#ifdef USE_BLACKBOX_FILE
+    case BLACKBOX_DEVICE_FILE:
+        blackboxFileBuffer[blackboxFileBufferPos++] = value;
+        if (blackboxFileBufferPos >= BLACKBOX_FILE_BUFFER_SIZE) {
+            blackboxFileFlushBuffer();
+        }
         break;
 #endif
     case BLACKBOX_DEVICE_SERIAL:
@@ -185,6 +212,18 @@ int blackboxWriteString(const char *s)
         break;
 #endif // USE_SDCARD
 
+#ifdef USE_BLACKBOX_FILE
+    case BLACKBOX_DEVICE_FILE:
+        length = strlen(s);
+        for (int i = 0; i < length; i++) {
+            blackboxFileBuffer[blackboxFileBufferPos++] = s[i];
+            if (blackboxFileBufferPos >= BLACKBOX_FILE_BUFFER_SIZE) {
+                blackboxFileFlushBuffer();
+            }
+        }
+        break;
+#endif // USE_BLACKBOX_FILE
+
     case BLACKBOX_DEVICE_SERIAL:
     default:
         pos = (uint8_t*) s;
@@ -218,6 +257,12 @@ void blackboxDeviceFlush(void)
         break;
 #endif // USE_FLASHFS
 
+#ifdef USE_BLACKBOX_FILE
+    case BLACKBOX_DEVICE_FILE:
+        blackboxFileFlushBuffer();
+        break;
+#endif // USE_BLACKBOX_FILE
+
     default:
         ;
     }
@@ -249,6 +294,15 @@ bool blackboxDeviceFlushForce(void)
         // been physically written to the SD card yet.
         return afatfs_flush();
 #endif // USE_SDCARD
+
+#ifdef USE_BLACKBOX_FILE
+    case BLACKBOX_DEVICE_FILE:
+        blackboxFileFlushBuffer();
+        if (blackboxFile) {
+            fflush(blackboxFile);
+        }
+        return true;
+#endif // USE_BLACKBOX_FILE
 
     default:
         return false;
@@ -361,6 +415,16 @@ bool blackboxDeviceOpen(void)
         return true;
         break;
 #endif // USE_SDCARD
+#ifdef USE_BLACKBOX_FILE
+    case BLACKBOX_DEVICE_FILE:
+        blackboxFile = fopen(BLACKBOX_FILENAME, "wb");
+        if (!blackboxFile) {
+            return false;
+        }
+        blackboxFileBufferPos = 0;
+        blackboxMaxHeaderBytesPerIteration = BLACKBOX_TARGET_HEADER_BUDGET_PER_ITERATION;
+        return true;
+#endif // USE_BLACKBOX_FILE
     default:
         return false;
     }
@@ -428,6 +492,15 @@ void blackboxDeviceClose(void)
     case BLACKBOX_DEVICE_FLASH:
         // Some flash device, e.g., NAND devices, require explicit close to flush internally buffered data.
         flashfsClose();
+        break;
+#endif
+#ifdef USE_BLACKBOX_FILE
+    case BLACKBOX_DEVICE_FILE:
+        if (blackboxFile) {
+            blackboxFileFlushBuffer();
+            fclose(blackboxFile);
+            blackboxFile = NULL;
+        }
         break;
 #endif
     default:
@@ -641,6 +714,11 @@ bool isBlackboxDeviceWorking(void)
         return flashfsIsReady();
 #endif
 
+#ifdef USE_BLACKBOX_FILE
+    case BLACKBOX_DEVICE_FILE:
+        return blackboxFile != NULL;
+#endif
+
     default:
         return false;
     }
@@ -679,6 +757,11 @@ void blackboxReplenishHeaderBudget(void)
 #ifdef USE_SDCARD
     case BLACKBOX_DEVICE_SDCARD:
         freeSpace = afatfs_getFreeBufferSpace();
+        break;
+#endif
+#ifdef USE_BLACKBOX_FILE
+    case BLACKBOX_DEVICE_FILE:
+        freeSpace = BLACKBOX_FILE_BUFFER_SIZE - blackboxFileBufferPos;
         break;
 #endif
     default:
@@ -745,6 +828,18 @@ blackboxBufferReserveStatus_e blackboxDeviceReserveBufferSpace(int32_t bytes)
         // Assume that all writes will fit in the SDCard's buffers
         return BLACKBOX_RESERVE_TEMPORARY_FAILURE;
 #endif // USE_SDCARD
+
+#ifdef USE_BLACKBOX_FILE
+    case BLACKBOX_DEVICE_FILE:
+        if (bytes > (int32_t) BLACKBOX_FILE_BUFFER_SIZE) {
+            return BLACKBOX_RESERVE_PERMANENT_FAILURE;
+        }
+        // Flush the buffer to make room
+        if (bytes > (int32_t)(BLACKBOX_FILE_BUFFER_SIZE - blackboxFileBufferPos)) {
+            blackboxFileFlushBuffer();
+        }
+        return BLACKBOX_RESERVE_TEMPORARY_FAILURE;
+#endif // USE_BLACKBOX_FILE
 
     default:
         return BLACKBOX_RESERVE_PERMANENT_FAILURE;

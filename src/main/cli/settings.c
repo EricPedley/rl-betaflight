@@ -223,7 +223,7 @@ static const char * const lookupTableGimbalMode[] = {
 
 #ifdef USE_BLACKBOX
 static const char * const lookupTableBlackboxDevice[] = {
-    "NONE", "SPIFLASH", "SDCARD", "SERIAL"
+    "NONE", "SPIFLASH", "SDCARD", "SERIAL", "FILE"
 };
 
 static const char * const lookupTableBlackboxMode[] = {
