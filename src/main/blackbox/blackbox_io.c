@@ -419,8 +419,10 @@ bool blackboxDeviceOpen(void)
     case BLACKBOX_DEVICE_FILE:
         blackboxFile = fopen(BLACKBOX_FILENAME, "wb");
         if (!blackboxFile) {
+            fprintf(stderr, "[BLACKBOX] failed to create '%s'\n", BLACKBOX_FILENAME);
             return false;
         }
+        printf("[BLACKBOX] file created: '%s'\n", BLACKBOX_FILENAME);
         blackboxFileBufferPos = 0;
         blackboxMaxHeaderBytesPerIteration = BLACKBOX_TARGET_HEADER_BUDGET_PER_ITERATION;
         return true;
