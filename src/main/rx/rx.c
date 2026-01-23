@@ -393,7 +393,7 @@ void rxInit(void)
     pt1FilterInit(&rsnrFilter, k);
 #endif //USE_RX_RSNR
 
-    rxChannelCount = MIN(rxConfig()->max_aux_channel + NON_AUX_CHANNEL_COUNT, rxRuntimeState.channelCount);
+    rxChannelCount = rxRuntimeState.channelCount;
 }
 
 bool rxIsReceivingSignal(void)
