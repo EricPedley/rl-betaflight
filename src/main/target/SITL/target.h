@@ -264,6 +264,7 @@ typedef struct {
     double velocity_xyz[3];             // m/s, earth frame
     double position_xyz[3];             // meters, NED from origin
     double pressure;
+    double rpms[4];
 } fdm_packet;
 
 typedef struct {

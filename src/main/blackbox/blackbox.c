@@ -257,7 +257,7 @@ static const blackboxDeltaFieldDefinition_t blackboxMainFields[] = {
     /* Tricopter tail servo */
     {"servo",       5, UNSIGNED, .Ipredict = PREDICT(1500),    .Iencode = ENCODING(SIGNED_VB),   .Ppredict = PREDICT(PREVIOUS),      .Pencode = ENCODING(SIGNED_VB), CONDITION(TRICOPTER)},
 
-#ifdef USE_DSHOT_TELEMETRY
+#if defined(USE_DSHOT_TELEMETRY) || defined(RL_TOOLS_BETAFLIGHT_ENABLE)
     // eRPM / 100
     {"eRPM",  0, UNSIGNED, .Ipredict = PREDICT(0),       .Iencode = ENCODING(UNSIGNED_VB), .Ppredict = PREDICT(PREVIOUS),      .Pencode = ENCODING(SIGNED_VB), CONDITION(MOTOR_1_HAS_RPM)},
     {"eRPM",  1, UNSIGNED, .Ipredict = PREDICT(0),       .Iencode = ENCODING(UNSIGNED_VB), .Ppredict = PREDICT(PREVIOUS),      .Pencode = ENCODING(SIGNED_VB), CONDITION(MOTOR_2_HAS_RPM)},
@@ -335,7 +335,7 @@ typedef struct blackboxMainState_s {
     int16_t debug[DEBUG16_VALUE_COUNT];
     int16_t motor[MAX_SUPPORTED_MOTORS];
     int16_t servo[MAX_SUPPORTED_SERVOS];
-#ifdef USE_DSHOT_TELEMETRY
+#if defined(USE_DSHOT_TELEMETRY) || defined(RL_TOOLS_BETAFLIGHT_ENABLE)
     int16_t erpm[MAX_SUPPORTED_MOTORS];
 #endif
 
@@ -460,7 +460,7 @@ static bool testBlackboxConditionUncached(FlightLogFieldCondition condition)
     case CONDITION(AT_LEAST_MOTORS_8):
         return (getMotorCount() >= condition - FLIGHT_LOG_FIELD_CONDITION_AT_LEAST_MOTORS_1 + 1) && isFieldEnabled(FIELD_SELECT(MOTOR));
 
-#ifdef USE_DSHOT_TELEMETRY
+#if defined(USE_DSHOT_TELEMETRY) || defined(RL_TOOLS_BETAFLIGHT_ENABLE)
     case CONDITION(MOTOR_1_HAS_RPM):
     case CONDITION(MOTOR_2_HAS_RPM):
     case CONDITION(MOTOR_3_HAS_RPM):
@@ -469,7 +469,11 @@ static bool testBlackboxConditionUncached(FlightLogFieldCondition condition)
     case CONDITION(MOTOR_6_HAS_RPM):
     case CONDITION(MOTOR_7_HAS_RPM):
     case CONDITION(MOTOR_8_HAS_RPM):
+    #ifdef RL_TOOLS_BETAFLIGHT_ENABLE
+        return (getMotorCount() >= condition - CONDITION(MOTOR_1_HAS_RPM) + 1) && isFieldEnabled(FIELD_SELECT(RPM));
+    #else
         return (getMotorCount() >= condition - CONDITION(MOTOR_1_HAS_RPM) + 1) && useDshotTelemetry && isFieldEnabled(FIELD_SELECT(RPM));
+    #endif
 #endif
 
     case CONDITION(TRICOPTER):
@@ -699,7 +703,7 @@ static void writeIntraframe(void)
         }
     }
 
-#ifdef USE_DSHOT_TELEMETRY
+#if defined(USE_DSHOT_TELEMETRY) || defined(RL_TOOLS_BETAFLIGHT_ENABLE)
     if (isFieldEnabled(FIELD_SELECT(RPM))) {
         const int motorCount = getMotorCount();
         for (int x = 0; x < motorCount; x++) {
@@ -853,7 +857,7 @@ static void writeInterframe(void)
             blackboxWriteSignedVB(blackboxCurrent->servo[5] - blackboxLast->servo[5]);
         }
     }
-#ifdef USE_DSHOT_TELEMETRY
+#if defined(USE_DSHOT_TELEMETRY) || defined(RL_TOOLS_BETAFLIGHT_ENABLE)
     if (isFieldEnabled(FIELD_SELECT(RPM))) {
         const int motorCount = getMotorCount();
         for (int x = 0; x < motorCount; x++) {
@@ -1171,6 +1175,11 @@ static void loadMainState(timeUs_t currentTimeUs)
 #ifdef USE_DSHOT_TELEMETRY
     for (int i = 0; i < motorCount; i++) {
         blackboxCurrent->erpm[i] = getDshotErpm(i);
+    }
+#endif
+#ifdef RL_TOOLS_BETAFLIGHT_ENABLE
+    for (int i = 0; i < motorCount; i++) {
+        blackboxCurrent->erpm[i] = nn_input_rpms[i];
     }
 #endif
 
@@ -1525,6 +1534,9 @@ static bool blackboxWriteSysinfo(void)
         BLACKBOX_PRINT_HEADER_LINE(PARAM_NAME_DYN_NOTCH_COUNT, "%d",        dynNotchConfig()->dyn_notch_count);
         BLACKBOX_PRINT_HEADER_LINE(PARAM_NAME_DYN_NOTCH_Q, "%d",            dynNotchConfig()->dyn_notch_q);
         BLACKBOX_PRINT_HEADER_LINE(PARAM_NAME_DYN_NOTCH_MIN_HZ, "%d",       dynNotchConfig()->dyn_notch_min_hz);
+#endif
+#ifdef RL_TOOLS_BETAFLIGHT_ENABLE
+        BLACKBOX_PRINT_HEADER_LINE(PARAM_NAME_MOTOR_POLES, "%d",            1);
 #endif
 #ifdef USE_DSHOT_TELEMETRY
         BLACKBOX_PRINT_HEADER_LINE(PARAM_NAME_DSHOT_BIDIR, "%d",            useDshotTelemetry);

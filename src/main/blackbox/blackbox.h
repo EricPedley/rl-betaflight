@@ -25,6 +25,10 @@
 #include "common/time.h"
 #include "pg/pg.h"
 
+#ifdef RL_TOOLS_BETAFLIGHT_ENABLE
+#include "rl_tools/policy.h"
+#endif
+
 typedef enum BlackboxDevice {
     BLACKBOX_DEVICE_NONE = 0,
     BLACKBOX_DEVICE_FLASH = 1,

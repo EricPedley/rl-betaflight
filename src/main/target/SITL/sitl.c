@@ -38,6 +38,9 @@
 #include "drivers/system.h"
 #include "drivers/pwm_output.h"
 #include "drivers/light_led.h"
+#ifdef RL_TOOLS_BETAFLIGHT_ENABLE
+#include "rl_tools/policy.h"
+#endif
 
 #include "drivers/timer.h"
 #include "timer_def.h"
@@ -183,6 +186,12 @@ void updateState(const fdm_packet* pkt)
     imuUpdateAttitude(micros());
 #endif
 
+
+#ifdef RL_TOOLS_BETAFLIGHT_ENABLE
+    for(int motorIndex=0;motorIndex<4;motorIndex++) {
+        nn_input_rpms[motorIndex] = pkt->rpms[motorIndex];
+    }
+#endif
 
     if (deltaSim < 0.02 && deltaSim > 0) { // simulator should run faster than 50Hz
 //        simRate = simRate * 0.5 + (1e6 * deltaSim / (realtime_now - last_realtime)) * 0.5;
