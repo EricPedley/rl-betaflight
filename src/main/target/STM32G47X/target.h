@@ -34,8 +34,12 @@
 #define USE_I2C_DEVICE_4
 
 #define USE_VCP
+
+// Eric's custom defines because I'm too stupid to just pass these in the build command
 #define USE_DSHOT
 #define USE_DSHOT_TELEMETRY
+#define USE_RX_EXPRESSLRS
+// 
 
 #define USE_SOFTSERIAL
 
