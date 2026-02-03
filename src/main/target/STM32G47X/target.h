@@ -34,6 +34,8 @@
 #define USE_I2C_DEVICE_4
 
 #define USE_VCP
+#define USE_DSHOT
+#define USE_DSHOT_TELEMETRY
 
 #define USE_SOFTSERIAL
 
