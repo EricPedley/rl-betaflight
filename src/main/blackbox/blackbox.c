@@ -1535,7 +1535,7 @@ static bool blackboxWriteSysinfo(void)
         BLACKBOX_PRINT_HEADER_LINE(PARAM_NAME_DYN_NOTCH_Q, "%d",            dynNotchConfig()->dyn_notch_q);
         BLACKBOX_PRINT_HEADER_LINE(PARAM_NAME_DYN_NOTCH_MIN_HZ, "%d",       dynNotchConfig()->dyn_notch_min_hz);
 #endif
-#ifdef RL_TOOLS_BETAFLIGHT_ENABLE
+#ifdef SITL
         BLACKBOX_PRINT_HEADER_LINE(PARAM_NAME_MOTOR_POLES, "%d",            1);
 #endif
 #ifdef USE_DSHOT_TELEMETRY
