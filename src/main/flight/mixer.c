@@ -395,6 +395,7 @@ static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t 
 {
 #ifdef RL_TOOLS_BETAFLIGHT_ENABLE
     rl_tools_control(IS_RC_MODE_ACTIVE(BOXNNCONTROL) && ARMING_FLAG(ARMED));
+    if(!IS_RC_MODE_ACTIVE(BOXNNCONTROL))
 #endif
     {
         // Standard Betaflight control - apply the mix to motor endpoints
