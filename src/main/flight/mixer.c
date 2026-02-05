@@ -394,11 +394,7 @@ static void applyRpmLimiter(mixerRuntime_t *mixer)
 static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t *activeMixer)
 {
 #ifdef RL_TOOLS_BETAFLIGHT_ENABLE
-    // Check if NN control mode is active
-    if (IS_RC_MODE_ACTIVE(BOXNNCONTROL)) {
-        // NN control is active - use rl_tools instead of standard mixer
-        rl_tools_control(ARMING_FLAG(ARMED));
-    } else
+    rl_tools_control(IS_RC_MODE_ACTIVE(BOXNNCONTROL) && ARMING_FLAG(ARMED));
 #endif
     {
         // Standard Betaflight control - apply the mix to motor endpoints
