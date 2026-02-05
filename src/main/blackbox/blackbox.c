@@ -1177,7 +1177,7 @@ static void loadMainState(timeUs_t currentTimeUs)
         blackboxCurrent->erpm[i] = getDshotErpm(i);
     }
 #endif
-#ifdef RL_TOOLS_BETAFLIGHT_ENABLE
+#ifdef SITL
     for (int i = 0; i < motorCount; i++) {
         blackboxCurrent->erpm[i] = nn_input_rpms[i];
     }
