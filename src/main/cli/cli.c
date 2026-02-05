@@ -4838,10 +4838,6 @@ if (buildKey) {
     }
     cliPrintLinefeed();
 
-#ifdef RL_TOOLS_BETAFLIGHT_ENABLE
-        rl_tools_status();
-#endif
-
 }
 
 static void cliTasks(const char *cmdName, char *cmdline)
